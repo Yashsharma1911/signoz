@@ -6,28 +6,28 @@ import (
 	"math/rand"
 
 	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/codes"
 	"go.opentelemetry.io/otel/exporters/otlp/otlpmetric/otlpmetricgrpc"
 	"go.opentelemetry.io/otel/metric"
 	metricsdk "go.opentelemetry.io/otel/sdk/metric"
 	"go.opentelemetry.io/otel/sdk/resource"
+	"go.opentelemetry.io/otel/trace"
 	"google.golang.org/grpc/credentials"
 )
 
-// Init Meter return instance of meter provider
+// InitMeter initializes and returns an instance of the MeterProvider.
+// The MeterProvider is configured with a resource describing the service
+// and an OTLP exporter to send metrics to a remote collector.
 func InitMeter() *metricsdk.MeterProvider {
 	secureOption := otlpmetricgrpc.WithTLSCredentials(credentials.NewClientTLSFromCert(nil, ""))
 	if len(insecure) > 0 {
 		secureOption = otlpmetricgrpc.WithInsecure()
 	}
-	exporter, err := otlpmetricgrpc.New(
+	exporter, _ := otlpmetricgrpc.New(
 		context.Background(),
 		secureOption,
 		otlpmetricgrpc.WithEndpoint(collectorURL),
 	)
-
-	if err != nil {
-		log.Fatalf("Failed to create exporter: %v", err)
-	}
 
 	res, err := resource.New(
 		context.Background(),
@@ -47,11 +47,11 @@ func InitMeter() *metricsdk.MeterProvider {
 	return provider
 }
 
-// Metrics Generator can be used to all all types of meter
+// Metrics Generator can be used to all types of meter
 // This is only used for testing, it can be modified for necessary changes
 func MetricsGenerator(meter metric.Meter) {
 	exceptionsCounter(meter)
-	requestDurationHistogram(meter)
+	rqstDurationHistogram(meter)
 	countItemsGauge(meter)
 }
 
@@ -67,16 +67,17 @@ func exceptionsCounter(meter metric.Meter) {
 		log.Fatal("Error creating counter: ", err)
 	}
 
-	// Simulate an exception occurring and increment the counter
 	counter.Add(context.Background(), 1,
 		metric.WithAttributes(
-			attribute.String("endpoint", "/some-endpoint"),
+			attribute.String("endpoint", "/items"),
 			attribute.String("error_type", "NullPointerException"),
 		),
 	)
 }
 
-func requestDurationHistogram(meter metric.Meter) {
+// requestDurationHistogram records the simulated duration of HTTP requests.
+// The metric is recorded with random durations for demonstration purposes.
+func rqstDurationHistogram(meter metric.Meter) {
 	histogram, err := meter.Int64Histogram("request_duration", metric.WithUnit("ms"), metric.WithDescription("HTTP request duration"))
 	if err != nil {
 		log.Fatal("Error creating histogram: ", err)
@@ -85,6 +86,8 @@ func requestDurationHistogram(meter metric.Meter) {
 	histogram.Record(context.Background(), rand.Int63n(1000), metric.WithAttributes(attribute.String("path", "/api")))
 }
 
+// countItemsGauge creates an observable gauge to report the count of items.
+// The value is updated via a callback function with random data for testing purposes.
 func countItemsGauge(meter metric.Meter) {
 	gauge, err := meter.Float64ObservableGauge("items_count", metric.WithUnit("1"), metric.WithDescription("Duration of HTTP requests"))
 	if err != nil {
@@ -102,5 +105,13 @@ func countItemsGauge(meter metric.Meter) {
 	)
 	if err != nil {
 		log.Fatal("Error in registering callback: ", err)
+	}
+}
+
+func RecordSpanError(ctx context.Context, err error) {
+	span := trace.SpanFromContext(ctx)
+	if span.IsRecording() {
+		span.SetStatus(codes.Error, err.Error())
+		span.RecordError(err, trace.WithAttributes(attribute.String("error.type", "simulated_error")))
 	}
 }

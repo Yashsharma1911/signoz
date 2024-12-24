@@ -15,6 +15,7 @@ import (
 	"google.golang.org/grpc/credentials"
 )
 
+// Change copied vars here
 var (
 	serviceName  = "test-signoz"
 	collectorURL = "ingest.in.signoz.cloud:443"
@@ -65,7 +66,7 @@ func InitTracer() func(context.Context) error {
 		sdktrace.NewTracerProvider(
 			sdktrace.WithSampler(sdktrace.AlwaysSample()),
 			sdktrace.WithBatcher(exporter,
-				sdktrace.WithMaxExportBatchSize(512),
+				sdktrace.WithMaxExportBatchSize(10),
 				sdktrace.WithBatchTimeout(5*time.Second),
 			),
 			sdktrace.WithResource(resources),
