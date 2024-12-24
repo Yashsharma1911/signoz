@@ -76,7 +76,7 @@ func exceptionsCounter(meter metric.Meter) {
 }
 
 // requestDurationHistogram records the simulated duration of HTTP requests.
-// The metric is recorded with random durations for demonstration purposes.
+// Metric is recorded with random durations for testing purposes.
 func rqstDurationHistogram(meter metric.Meter) {
 	histogram, err := meter.Int64Histogram("request_duration", metric.WithUnit("ms"), metric.WithDescription("HTTP request duration"))
 	if err != nil {
@@ -87,7 +87,7 @@ func rqstDurationHistogram(meter metric.Meter) {
 }
 
 // countItemsGauge creates an observable gauge to report the count of items.
-// The value is updated via a callback function with random data for testing purposes.
+// Value is updated via a callback function with random data for testing purposes.
 func countItemsGauge(meter metric.Meter) {
 	gauge, err := meter.Float64ObservableGauge("items_count", metric.WithUnit("1"), metric.WithDescription("Duration of HTTP requests"))
 	if err != nil {
