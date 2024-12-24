@@ -6,3 +6,5 @@ SigNoz supports a wide variety of telemetry signal which makes this application 
 - OpenTelemetry Metrics SDK
 - SigNoz Cloud for visualization
 - OTLP Exporter for metrics transmission
+
+Find all details of setup at - https://docs.google.com/document/d/19By5JTaqUk5bQv5cu1Wb76yChbHx8CIbEzuCXY5Os9Y/edit?tab=t.0
