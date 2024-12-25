@@ -13,6 +13,7 @@ import (
 	"go.opentelemetry.io/contrib/instrumentation/github.com/gin-gonic/gin/otelgin"
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/codes"
+	"go.opentelemetry.io/otel/metric"
 )
 
 var (
@@ -33,7 +34,7 @@ func main() {
 	// to generate metrics like histogram, gauge
 	// In production application you might not do this for each metrics
 	router.Use(otelgin.Middleware(serviceName))
-	metrics.MetricsGenerator(meter)
+	router.Use(metricsMiddleware(meter))
 	tracer := otel.Tracer(serviceName)
 
 	router.GET("/", func(c *gin.Context) {
@@ -75,5 +76,11 @@ func main() {
 
 	if err := router.Run(":" + port); err != nil {
 		log.Fatal("Error starting Gin server: ", err)
+	}
+}
+func metricsMiddleware(meter metric.Meter) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		metrics.MetricsGenerator(meter)
+		c.Next()
 	}
 }
