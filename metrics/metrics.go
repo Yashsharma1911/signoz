@@ -20,14 +20,18 @@ import (
 // and an OTLP exporter to send metrics to a remote collector.
 func InitMeter() *metricsdk.MeterProvider {
 	secureOption := otlpmetricgrpc.WithTLSCredentials(credentials.NewClientTLSFromCert(nil, ""))
-	if len(insecure) > 0 {
-		secureOption = otlpmetricgrpc.WithInsecure()
-	}
-	exporter, _ := otlpmetricgrpc.New(
+	// if len(insecure) > 0 {
+	// 	secureOption = otlpmetricgrpc.WithInsecure()
+	// }
+	exporter, err := otlpmetricgrpc.New(
 		context.Background(),
 		secureOption,
 		otlpmetricgrpc.WithEndpoint(collectorURL),
+		otlpmetricgrpc.WithHeaders(headers),
 	)
+	if err != nil {
+		log.Fatalf("Error creating OTLP exporter: %v", err)
+	}
 
 	res, err := resource.New(
 		context.Background(),
